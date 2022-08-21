@@ -1,14 +1,18 @@
 # road-to-graphql
-Implements a Users database using twintag structured data.
+
+This repository demonstrates the combination twintag, deno and graphql.
+
+It implements a Users database using twintag structured data.
 
 The table is called `appusers` with columns
 
-* id: ising internal object UUID ($qid) as user's id
 * username: some string
 * password: hash of password really
 * email: nullable
 
-GraphQL Schema is 
+Using the object's `$qid` aka UUID in Twintag Admin as user's id.
+
+The GraphQL Schema is 
 
 ```
   scalar Uuid
@@ -30,6 +34,12 @@ GraphQL Schema is
     removeUser(id:Uuid!): Boolean
   }
 ```
+
+Here is a Deno compatible [twintag SDK](https://github.com/jvanriel/twintag).
+This SDK also features extra configurable http logging in the client.
+
+You can run `epsilon/epsilon_server.ts` and then use desktop app `GraphiQL` against it.
+
 
 ## Twintag Project
 
