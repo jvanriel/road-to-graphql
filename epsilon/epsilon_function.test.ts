@@ -16,16 +16,17 @@ let userId = ''
 
 Deno.test("user-create", async () => {
 
-
-  const body = `
-  mutation {
-    createUser(username:"Jan Van Riel", password:"Tester") {
-      id
+  const body = {
+    query:`mutation {
+      createUser(username:"Jan Van Riel", password:"Tester") {
+        id
+      }
+    }`,
+    variables: {
     }
   }
-  `
 
-  const response = await epsilon(createEvent(body), {testing: true})
+  const response = await epsilon(createEvent(JSON.stringify(body)), {testing: true})
   t.assertEquals(response.status, 200)
 
   const json = await response.json()
@@ -35,15 +36,19 @@ Deno.test("user-create", async () => {
 
 Deno.test("user-list", async () => {
 
-  const body = `
-  query {
-    users {
-      id
-      username
+  const body = {
+    query: `
+      query {
+        users {
+          id
+          username
+        }
+      }`,
+    variables: {
     }
   }
-  `
-  const response = await epsilon(createEvent(body), {testing: true})
+
+  const response = await epsilon(createEvent(JSON.stringify(body)), {testing: true})
   t.assertEquals(response.status, 200)
 
   const json = await response.json()
@@ -52,19 +57,21 @@ Deno.test("user-list", async () => {
 
 Deno.test("user-fetch", async () => {
 
-
-  const body = `
-  query {
-    user(id: "${userId}") {
-      id
-      username
-      password
-      email
+  const body = {
+    query: `
+      query {
+        user(id: "${userId}") {
+          id
+          username
+          password
+          email
+        }
+      }`,
+    variables: {
     }
   }
-  `
 
-  const response = await epsilon(createEvent(body), {testing: true})
+  const response = await epsilon(createEvent(JSON.stringify(body)), {testing: true})
   t.assertEquals(response.status, 200)
 
   const json = await response.json()
@@ -74,13 +81,16 @@ Deno.test("user-fetch", async () => {
 
 Deno.test("user-remove", async () => {
 
-  const body = `
-  mutation {
-    removeUser(id: "${userId}") 
+  const body = {
+    query: `
+      mutation {
+        removeUser(id: "${userId}") 
+      }`,
+    variables: {
+    }
   }
-  `
 
-  const response = await epsilon(createEvent(body), {testing: true})
+  const response = await epsilon(createEvent(JSON.stringify(body)), {testing: true})
   t.assertEquals(response.status, 200)
 
   const json = await response.json()

@@ -1,52 +1,47 @@
-import { Application } from "./deps.ts";
-import { type Event } from "./types.ts";
-import { VIEW_QID,  API_KEY} from "./environment.ts";
-import { root } from "./epsilon_function.ts";
+import { serve } from "https://deno.land/std@0.151.0/http/server.ts";
+import { type ServeInit } from "https://deno.land/std@0.151.0/http/server.ts";
+import { readAll } from "https://deno.land/std@0.151.0/streams/conversion.ts";
+import { readerFromStreamReader } from "https://deno.land/std@0.152.0/streams/mod.ts";
+import { VIEW_QID, API_KEY } from "./environment.ts";
+import type { Event } from "./types.ts"
+import { epsilon } from "./epsilon_function.ts";
 
+const decoder = new TextDecoder();
 
-export const app = new Application();
+type onListenProps = {
+  port: number
+  hostname: string
+}
 
-app.use(async (ctx) => {
-  try {
-    const reqBody = await ctx.request.body({type:'json'}).value
-
-    const event = {
-      view: {
-        qid: VIEW_QID
-      },
-      request : {
-        body: reqBody
-      },
-      project: {
-        apiKey: API_KEY
-
-
-      }
-    } as Event
-
-    //  deno-lint-ignore no-explicit-any
-    const rspBody = await (root as any).epsilon(event)
-    console.log('RSPBODY', rspBody)
-    ctx.response.body = rspBody
-    ctx.response.status = 200
-  } catch (err) {
-    console.error(err)
-    ctx.response.body = `${err}`
-    ctx.response.status = 500
+const createEvent = (body: string): Event => {
+  return {
+    view: { qid: VIEW_QID },
+    request: { body: body},
+    project: { apiKey: API_KEY},
+    logging: {http: 'none', event:'none' }
   }
+}
 
-})
+const handleRequest = async (req:Request) => {
+  if (req.body) {
+    const readableStreamDefaultReader = req.body.getReader({ mode: undefined })
+    const denoReader = readerFromStreamReader(readableStreamDefaultReader)
+      const body = await readAll(denoReader)
+      const text = decoder.decode(body)
+      return await epsilon(createEvent(text), { testing: true})
+  } else {
+    throw Error("missing body")
+  }
+}
 
-app.addEventListener("listen", e => {
-  console.log(e.hostname, e.port)
-})
+const serveInit:ServeInit = {
+  onListen(props:onListenProps) {
+    const { hostname, port } = props 
+    console.log(`Server started at http://${hostname}:${port}`);
+  },
+  onError(error: unknown) {
+    return new Response(`${error}`)
+  }
+}
 
-app.addEventListener("error", e => {
-  console.error(e.message)
-})
-
-
-const PORT = 8080;
-const HOST = "localhost";
-
-await app.listen({hostname:HOST, port:PORT})
+serve(handleRequest, serveInit);

@@ -16,16 +16,14 @@ interface User {
 }
 
 interface TTAppUser extends User {
-  // TWINTAG: having to specify a dataScope is too weird
+  // TWINTAG: having to specify a dataScope is weird
   $dataScope?:string 
   // TWINTAG: $qid is called Id in the API, UUID in admin console, $qid in the record 
-  // and is also quoted "$qid". Yet it is a row or record ID so why not 
-  // just $rid, $rowId, $row or $recordId or $objectId or $oid but not qid
-  // as the q refers to QR code
+  // yet it is really a rowId or objectId when a row represents and object
   $qid?: string 
 }
 
-const typeDefs = `
+const schemaText = `
   scalar Uuid
 
   type Query {
@@ -98,10 +96,13 @@ const rootValue = {
     },
 }
 
-export const epsilonHandler = async (project: twintag.Project, view: twintag.View, source:string): Promise<JSObject> => {
+export const epsilonHandler = async (project: twintag.Project, view: twintag.View, body:string): Promise<JSObject> => {
   try {
-    const schema = gql.buildSchema(typeDefs)
-    return await gql.graphql(schema, source, rootValue, {project: project, view: view} )
+    const schema = gql.buildSchema(schemaText)
+    const parsed = JSON.parse(body)
+    const source = parsed["query"]
+    const variables = parsed["variables"]
+    return await gql.graphql(schema, source, rootValue, {project: project, view: view}, variables)
   } catch(err) {
     return { errors: [{message:`${err}`}]}
   }
